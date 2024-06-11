@@ -3,8 +3,10 @@
 ### To see the documentation:
 <a>https://help.syncfusion.com/flutter/maps/overview<a>
 
-To see the implementation of Polyline:
+### To see the implementation of Polyline:
 
-lib/title_layer/vector_layer/polylines.dart
+<a href="https://github.com/Tamim200042130/Flutter-Open-Street-Map/blob/syncfusion/lib/samples/maps/tile_layer/vector_layer/polylines.dart"> /lib/samples/maps/tile_layer/vector_layer
+/polylines.dart </a>
 
-You can go through the other implementation as well. 
+
+### You can go through the other implementation as well. 
