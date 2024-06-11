@@ -1,6 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.yourapp">  <!-- Make sure to replace this with your actual package name -->
 
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+
     <application
         android:label="flutter_open_street_map"
         android:name="${applicationName}"
@@ -32,10 +35,6 @@
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
-
-    <!-- Add the location permissions here -->
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility?hl=en and

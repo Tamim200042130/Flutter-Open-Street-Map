@@ -14,6 +14,7 @@ dependencies:
   path_provider: ^2.0.1
   path_provider_macos: ^2.0.0
   desktop_window: 0.4.0
+  geolocator: ^9.0.2
 
   syncfusion_flutter_datagrid: ^25.2.7
   syncfusion_flutter_calendar: ^25.2.7+1

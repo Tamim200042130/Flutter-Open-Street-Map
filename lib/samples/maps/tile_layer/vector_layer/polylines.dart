@@ -1,15 +1,10 @@
-/// Flutter package imports
 import 'dart:convert';
-
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-
-/// Core theme import
+import 'package:geolocator/geolocator.dart';
 import 'package:syncfusion_flutter_core/theme.dart';
-
-/// Map import
 import 'package:syncfusion_flutter_maps/maps.dart';
 
 /// Local import
@@ -24,26 +19,36 @@ class MapPolylinesPage extends SampleView {
   _PolylinesSampleState createState() => _PolylinesSampleState();
 }
 
-class _PolylinesSampleState extends SampleViewState with SingleTickerProviderStateMixin {
+class _PolylinesSampleState extends SampleViewState
+    with SingleTickerProviderStateMixin {
   late MapZoomPanBehavior _zoomPanBehavior;
   MapTileLayerController? _mapController;
   AnimationController? _animationController;
   late Animation _animation;
   late bool _isDesktop;
   late List<_RouteDetails> _routes;
-  int _currentSelectedCityIndex = 0;
-  late String _routeJson;
+  Set<MapPolyline> _polylines = {};
   late ThemeData _themeData;
+  late MapLatLng _currentLocation;
 
   @override
   void initState() {
-    _routeJson = 'assets/london_to_british.json';
     _routes = <_RouteDetails>[
-      _RouteDetails(MapLatLng(51.4700, -0.4543), null, 'London Heathrow'),
+      _RouteDetails(MapLatLng(51.4700, -0.4543), null, 'London Heathrow',
+          'assets/london_to_british.json'),
+      _RouteDetails(MapLatLng(51.5194, -0.1270), null, 'The British Museum',
+          'assets/london_to_british.json'),
+      _RouteDetails(MapLatLng(51.4839, -0.6044), null, 'Windsor Castle',
+          'assets/london_to_windsor_castle.json'),
+      _RouteDetails(MapLatLng(51.4560, -0.3415), null, 'Twickenham Stadium',
+          'assets/london_to_twickenham_stadium.json'),
       _RouteDetails(
-          MapLatLng(51.5194, -0.1270),
-          Icon(Icons.location_on, color: Colors.red[600], size: 30),
-          'The British Museum'),
+          MapLatLng(51.3472, -0.3192),
+          null,
+          'Chessington World of Adventures',
+          'assets/london_to_chessington.json'),
+      _RouteDetails(MapLatLng(51.4036, -0.3378), null, 'Hampton Court Palace',
+          'assets/london_to_hampton_court_palace.json'),
     ];
     _mapController = MapTileLayerController();
     _zoomPanBehavior = MapZoomPanBehavior(
@@ -65,7 +70,43 @@ class _PolylinesSampleState extends SampleViewState with SingleTickerProviderSta
       parent: _animationController!,
       curve: Curves.easeInOut,
     );
+
+    _getCurrentLocation();
+
     super.initState();
+  }
+
+  Future<void> _getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      await Geolocator.openLocationSettings();
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permissions are denied.');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
+
+    final position = await Geolocator.getCurrentPosition();
+    setState(() {
+      _currentLocation = MapLatLng(position.latitude, position.longitude);
+      _routes[0] = _RouteDetails(_currentLocation, null, 'Current Location',
+          ''); // Update your location
+      _zoomPanBehavior.focalLatLng = _currentLocation;
+      _zoomPanBehavior.zoomLevel = 15;
+    });
   }
 
   @override
@@ -78,12 +119,12 @@ class _PolylinesSampleState extends SampleViewState with SingleTickerProviderSta
     super.dispose();
   }
 
-  Future<dynamic> getJsonData() async {
+  Future<List<MapLatLng>> getJsonData(String jsonFile) async {
     final List<MapLatLng> polyline = <MapLatLng>[];
-    final String data = await rootBundle.loadString(_routeJson);
+    final String data = await rootBundle.loadString(jsonFile);
     final dynamic jsonData = json.decode(data);
     final List<dynamic> polylinePoints =
-    jsonData['features'][0]['geometry']['coordinates'];
+        jsonData['features'][0]['geometry']['coordinates'];
     for (int i = 0; i < polylinePoints.length; i++) {
       polyline.add(MapLatLng(polylinePoints[i][1], polylinePoints[i][0]));
     }
@@ -100,201 +141,106 @@ class _PolylinesSampleState extends SampleViewState with SingleTickerProviderSta
         _themeData.platform == TargetPlatform.macOS ||
         _themeData.platform == TargetPlatform.windows ||
         _themeData.platform == TargetPlatform.linux;
-    return FutureBuilder(
-        future: getJsonData(),
-        builder: (BuildContext context, AsyncSnapshot<dynamic> snapdata) {
-          if (snapdata.hasData) {
-            final List<MapLatLng> polylinePoints = snapdata.data;
-            return Stack(children: [
-              Positioned.fill(
-                child: Image.asset(
-                  'images/maps_grid.png',
-                  repeat: ImageRepeat.repeat,
-                ),
-              ),
-              SfMapsTheme(
-                data: SfMapsThemeData(
-                  shapeHoverColor: Colors.transparent,
-                ),
-                child: SfMaps(
-                  layers: [
-                    MapTileLayer(
-                      urlTemplate:
-                      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      initialMarkersCount: _routes.length,
-                      controller: _mapController,
-                      markerBuilder: (BuildContext context, int index) {
-                        if (_routes[index].icon != null) {
-                          return MapMarker(
-                            key: UniqueKey(),
-                            latitude: _routes[index].latLan.latitude,
-                            longitude: _routes[index].latLan.longitude,
-                            child: _routes[index].icon,
-                          );
-                        } else {
-                          return MapMarker(
-                            key: UniqueKey(),
-                            latitude: _routes[index].latLan.latitude,
-                            longitude: _routes[index].latLan.longitude,
-                            iconType: MapIconType.circle,
-                            iconColor: Colors.white,
-                            iconStrokeWidth: 2.0,
-                            size: Size(15, 15),
-                            iconStrokeColor: Colors.black,
-                          );
-                        }
-                      },
-                      tooltipSettings: MapTooltipSettings(
-                        color: Color.fromRGBO(45, 45, 45, 1),
-                      ),
-                      markerTooltipBuilder: (BuildContext context, int index) {
-                        return Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(_routes[index].city,
-                              style: _themeData.textTheme.caption!.copyWith(
-                                  color: Color.fromRGBO(255, 255, 255, 1))),
-                        );
-                      },
-                      sublayers: [
-                        MapPolylineLayer(
-                            polylines: {
-                              MapPolyline(
-                                points: polylinePoints,
-                                color: Color.fromRGBO(0, 102, 255, 1.0),
-                                width: 6.0,
-                              )
-                            },
-                            tooltipBuilder: (BuildContext context, int index) {
-                              return Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text(
-                                    _routes[0].city + ' - ' + _routes[1].city,
-                                    style: _themeData.textTheme.caption!
-                                        .copyWith(
-                                        color: Color.fromRGBO(
-                                            255, 255, 255, 1))),
-                              );
-                            }),
-                      ],
-                      zoomPanBehavior: _zoomPanBehavior,
-                    ),
-                  ],
-                ),
-              ),
-              Align(
-                alignment: Alignment.topCenter,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildChipWidget(0, 'The British Museum'),
-                      _buildChipWidget(1, 'The Windsor Castle'),
-                      _buildChipWidget(2, 'Twickenham Stadium'),
-                      _buildChipWidget(3, 'Chessington World of Adventures'),
-                      _buildChipWidget(4, 'Hampton Court Palace'),
-                    ],
-                  ),
-                ),
-              )
-            ]);
-          } else {
-            return Container();
-          }
-        });
-  }
-
-  Widget _buildChipWidget(int index, String city) {
-    return Padding(
-      padding: _isDesktop
-          ? const EdgeInsets.only(left: 8.0, top: 8.0)
-          : const EdgeInsets.only(left: 8.0),
-      child: Material(
-        child: ChoiceChip(
-          backgroundColor: _themeData.brightness == Brightness.light
-              ? Colors.white
-              : Colors.black,
-          elevation: 3.0,
-          label: Text(
-            city,
-            style: TextStyle(
-              color: model.textColor,
-            ),
-          ),
-          selected: _currentSelectedCityIndex == index,
-          onSelected: (bool isSelected) {
-            if (isSelected) {
-              setState(() {
-                _currentSelectedCityIndex = index;
-                _currentNavigationLine(index, city);
-              });
-            }
-          },
+    return Scaffold(
+      body: SfMapsTheme(
+        data: SfMapsThemeData(
+          shapeHoverColor: Colors.transparent,
         ),
+        child: SfMaps(
+          layers: [
+            MapTileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              initialMarkersCount: _routes.length,
+              controller: _mapController,
+              markerBuilder: (BuildContext context, int index) {
+                return MapMarker(
+                  key: UniqueKey(),
+                  latitude: _routes[index].latLan.latitude,
+                  longitude: _routes[index].latLan.longitude,
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.location_on,
+                      color: index == 0 ? Colors.green[600] : Colors.red[600],
+                      size: 30,
+                    ),
+                    onPressed: () {
+                      _onMarkerTapped(index);
+                    },
+                  ),
+                );
+              },
+              tooltipSettings: MapTooltipSettings(
+                color: Color.fromRGBO(45, 45, 45, 1),
+              ),
+              markerTooltipBuilder: (BuildContext context, int index) {
+                return Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(_routes[index].city,
+                      style: _themeData.textTheme.caption!
+                          .copyWith(color: Color.fromRGBO(255, 255, 255, 1))),
+                );
+              },
+              sublayers: [
+                MapPolylineLayer(
+                  polylines: _polylines,
+                  tooltipBuilder: (BuildContext context, int index) {
+                    return Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        _routes[0].city + ' - ' + _routes[1].city,
+                        style: _themeData.textTheme.caption!
+                            .copyWith(color: Color.fromRGBO(255, 255, 255, 1)),
+                      ),
+                    );
+                  },
+                ),
+              ],
+              zoomPanBehavior: _zoomPanBehavior,
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          try {
+            await _getCurrentLocation();
+          } catch (e) {
+            print(e); // Print any errors to the console
+          }
+        },
+        child: Icon(Icons.my_location),
       ),
     );
   }
 
-  void _currentNavigationLine(int index, String city) {
-    switch (index) {
-      case 0:
-        setState(() {
-          _routeJson = 'assets/london_to_british.json';
-          _zoomPanBehavior.focalLatLng = MapLatLng(51.4700, -0.2843);
-          _zoomPanBehavior.zoomLevel = 10;
-          _routes[1] = _RouteDetails(MapLatLng(51.5194, -0.1270),
-              Icon(Icons.location_on, color: Colors.red[600], size: 30), city);
-          _mapController!.updateMarkers([1]);
-        });
-        break;
-      case 1:
-        setState(() {
-          _routeJson = 'assets/london_to_windsor_castle.json';
-          _zoomPanBehavior.focalLatLng = MapLatLng(51.4700, -0.5443);
-          _zoomPanBehavior.zoomLevel = 11;
-          _routes[1] = _RouteDetails(MapLatLng(51.4839, -0.6044),
-              Icon(Icons.location_on, color: Colors.red[600], size: 30), city);
-          _mapController!.updateMarkers([1]);
-        });
-        break;
-      case 2:
-        setState(() {
-          _routeJson = 'assets/london_to_twickenham_stadium.json';
-          _zoomPanBehavior.focalLatLng = MapLatLng(51.4700, -0.3843);
-          _zoomPanBehavior.zoomLevel = 11;
-          _routes[1] = _RouteDetails(MapLatLng(51.4560, -0.3415),
-              Icon(Icons.location_on, color: Colors.red[600], size: 30), city);
-          _mapController!.updateMarkers([1]);
-        });
-        break;
-      case 3:
-        setState(() {
-          _routeJson = 'assets/london_to_chessington.json';
-          _zoomPanBehavior.focalLatLng = MapLatLng(51.4050, -0.4300);
-          _zoomPanBehavior.zoomLevel = 10;
-          _routes[1] = _RouteDetails(MapLatLng(51.3472, -0.3192),
-              Icon(Icons.location_on, color: Colors.red[600], size: 30), city);
-          _mapController!.updateMarkers([1]);
-        });
-        break;
-      case 4:
-        setState(() {
-          _routeJson = 'assets/london_to_hampton_court_palace.json';
-          _zoomPanBehavior.focalLatLng = MapLatLng(51.4500, -0.4393);
-          _zoomPanBehavior.zoomLevel = 11;
-          _routes[1] = _RouteDetails(MapLatLng(51.4036, -0.3378),
-              Icon(Icons.location_on, color: Colors.red[600], size: 30), city);
-          _mapController!.updateMarkers([1]);
-        });
-        break;
+  void _onMarkerTapped(int index) async {
+    if (index == 0) {
+      // If the tapped marker is your location, clear the polylines.
+      setState(() {
+        _polylines.clear();
+      });
+    } else {
+      // Otherwise, load and display the corresponding polyline.
+      final List<MapLatLng> polylinePoints =
+          await getJsonData(_routes[index].jsonFile);
+      setState(() {
+        _polylines = {
+          MapPolyline(
+            points: polylinePoints,
+            color: Color.fromRGBO(0, 102, 255, 1.0),
+            width: 6.0,
+          ),
+        };
+      });
     }
   }
 }
 
 class _RouteDetails {
-  _RouteDetails(this.latLan, this.icon, this.city);
+  _RouteDetails(this.latLan, this.icon, this.city, this.jsonFile);
 
   MapLatLng latLan;
   Widget? icon;
   String city;
+  String jsonFile;
 }

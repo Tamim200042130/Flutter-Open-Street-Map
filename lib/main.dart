@@ -16,15 +16,15 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(),
-      // home: const MapPolylinesPage(
-      //   Key('polylines'),
-      // ),
+      home: const MapPolylinesPage(
+        Key('polylines'),
+      ),
       // home: const MapOSMPage(
       //   Key('osm'),
       // ),
-      home: const MapMarkerPage(
-        Key('marker'),
-      ),
+      // home: const MapMarkerPage(
+      //   Key('marker'),
+      // ),
     );
   }
 }
