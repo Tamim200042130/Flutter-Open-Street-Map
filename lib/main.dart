@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_open_street_map/OSM/map_page.dart';
+import 'package:flutter_open_street_map/samples/maps/shape_layer/selection/selection.dart';
+import 'package:flutter_open_street_map/samples/maps/shape_layer/sublayer/sublayer.dart';
+import 'package:flutter_open_street_map/samples/maps/tile_layer/bing_map/bing_map.dart';
+import 'package:flutter_open_street_map/samples/maps/tile_layer/open_street_map/open_street_map.dart';
+import 'package:flutter_open_street_map/samples/maps/tile_layer/vector_layer/polylines.dart';
 
 void main() {
   runApp(const MyApp());
@@ -8,17 +12,22 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const MapPage(),
+      theme: ThemeData(),
+      home: MapPolylinesPage(Key('poly-lines')),
+
+      // home: const MapOSMPage(
+      //   Key('osm'),
+      // ),
+      // home: const MapSublayerPage(
+      //   Key('sublayer'),
+      // ),
+      // home: const MapSelectionPage(
+      //   Key('selection'),
+      // ),
     );
   }
 }
