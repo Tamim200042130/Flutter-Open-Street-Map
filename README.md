@@ -1,6 +1,6 @@
 # Flutter-Open-Street-Map Syncfusion
 
-<img src="https://cdn.syncfusion.com/content/images/company-logos/Syncfusion_Logo_Image.png" height="300" width="300">
+<img src="https://cdn.syncfusion.com/content/images/company-logos/Syncfusion_Logo_Image.png" height="700" width="700">
 
 ### To see the documentation:
 <a href="https://help.syncfusion.com/flutter/maps/overview" target="_blank">Syncfucion Map</a>
