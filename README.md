@@ -1,4 +1,7 @@
-# Flutter-Open-Street-Map
+# Flutter-Open-Street-Map Syncfusion
+
+### To see the documentation:
+<a>https://help.syncfusion.com/flutter/maps/overview<a>
 
 To see the implementation of Polyline:
 
