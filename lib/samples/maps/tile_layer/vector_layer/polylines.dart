@@ -149,7 +149,9 @@ class _PolylinesSampleState extends SampleViewState
         child: SfMaps(
           layers: [
             MapTileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              // urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              urlTemplate:
+                  'https://www.google.com/maps/embed/v1/view?key=AIzaSyALrSTy6NpqdhIOUs3IQMfvjh71td2suzY&maptype=satellite&center=0.000000,0.000000&zoom=2',
               initialMarkersCount: _routes.length,
               controller: _mapController,
               markerBuilder: (BuildContext context, int index) {
