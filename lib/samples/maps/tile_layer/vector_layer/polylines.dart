@@ -1,18 +1,14 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:syncfusion_flutter_core/theme.dart';
 import 'package:syncfusion_flutter_maps/maps.dart';
 
-/// Local import
 import '../../../../model/sample_view.dart';
 
-/// Renders the polygon lines map sample
 class MapPolylinesPage extends SampleView {
-  /// Creates the polygon lines map sample
   const MapPolylinesPage(Key key) : super(key: key);
 
   @override
@@ -29,7 +25,7 @@ class _PolylinesSampleState extends SampleViewState
   late List<_RouteDetails> _routes;
   Set<MapPolyline> _polylines = {};
   late ThemeData _themeData;
-  late MapLatLng _currentLocation;
+  MapLatLng? _currentLocation;
 
   @override
   void initState() {
@@ -100,12 +96,23 @@ class _PolylinesSampleState extends SampleViewState
     }
 
     final position = await Geolocator.getCurrentPosition();
+
     setState(() {
       _currentLocation = MapLatLng(position.latitude, position.longitude);
-      _routes[0] = _RouteDetails(_currentLocation, null, 'Current Location',
-          ''); // Update your location
-      _zoomPanBehavior.focalLatLng = _currentLocation;
+      print("Current Location: $_currentLocation"); // Debugging print
+      _routes[0] = _RouteDetails(
+        _currentLocation!,
+        Icon(
+          Icons.my_location,
+          color: Colors.blue,
+          size: 30,
+        ),
+        'Current Location',
+        '',
+      );
+      _zoomPanBehavior.focalLatLng = _currentLocation!;
       _zoomPanBehavior.zoomLevel = 15;
+      print("Routes updated: ${_routes[0].latLan}"); // Debugging print
     });
   }
 
@@ -124,11 +131,10 @@ class _PolylinesSampleState extends SampleViewState
     final String data = await rootBundle.loadString(jsonFile);
     final dynamic jsonData = json.decode(data);
     final List<dynamic> polylinePoints =
-        jsonData['features'][0]['geometry']['coordinates'];
+    jsonData['features'][0]['geometry']['coordinates'];
     for (int i = 0; i < polylinePoints.length; i++) {
       polyline.add(MapLatLng(polylinePoints[i][1], polylinePoints[i][0]));
     }
-    // ignore: unawaited_futures
     _animationController?.forward(from: 0);
 
     return polyline;
@@ -149,18 +155,17 @@ class _PolylinesSampleState extends SampleViewState
         child: SfMaps(
           layers: [
             MapTileLayer(
-              // urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              urlTemplate:
-                  'https://www.google.com/maps/embed/v1/view?key=AIzaSyALrSTy6NpqdhIOUs3IQMfvjh71td2suzY&maptype=satellite&center=0.000000,0.000000&zoom=2',
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               initialMarkersCount: _routes.length,
               controller: _mapController,
               markerBuilder: (BuildContext context, int index) {
+                print("Building marker for index: $index, location: ${_routes[index].latLan}"); // Debugging print
                 return MapMarker(
                   key: UniqueKey(),
                   latitude: _routes[index].latLan.latitude,
                   longitude: _routes[index].latLan.longitude,
                   child: IconButton(
-                    icon: Icon(
+                    icon: _routes[index].icon ?? Icon(
                       Icons.location_on,
                       color: index == 0 ? Colors.green[600] : Colors.red[600],
                       size: 30,
@@ -207,7 +212,7 @@ class _PolylinesSampleState extends SampleViewState
           try {
             await _getCurrentLocation();
           } catch (e) {
-            print(e); // Print any errors to the console
+            print(e);
           }
         },
         child: Icon(Icons.my_location),
@@ -217,14 +222,12 @@ class _PolylinesSampleState extends SampleViewState
 
   void _onMarkerTapped(int index) async {
     if (index == 0) {
-      // If the tapped marker is your location, clear the polylines.
       setState(() {
         _polylines.clear();
       });
     } else {
-      // Otherwise, load and display the corresponding polyline.
       final List<MapLatLng> polylinePoints =
-          await getJsonData(_routes[index].jsonFile);
+      await getJsonData(_routes[index].jsonFile);
       setState(() {
         _polylines = {
           MapPolyline(
