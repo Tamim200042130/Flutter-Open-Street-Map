@@ -99,7 +99,7 @@ class _PolylinesSampleState extends SampleViewState
 
     setState(() {
       _currentLocation = MapLatLng(position.latitude, position.longitude);
-      print("Current Location: $_currentLocation"); // Debugging print
+      print('Current Location: $_currentLocation');
       _routes[0] = _RouteDetails(
         _currentLocation!,
         Icon(
@@ -112,10 +112,10 @@ class _PolylinesSampleState extends SampleViewState
       );
       _zoomPanBehavior.focalLatLng = _currentLocation!;
       _zoomPanBehavior.zoomLevel = 15;
-      print("Routes updated: ${_routes[0].latLan}"); // Debugging print
+      print('Routes updated: ${_routes[0].latLan}');
     });
 
-    _mapController?.updateMarkers([0]); // Explicitly update marker at index 0
+    _mapController?.updateMarkers([0]);
   }
 
   @override
@@ -133,7 +133,7 @@ class _PolylinesSampleState extends SampleViewState
     final String data = await rootBundle.loadString(jsonFile);
     final dynamic jsonData = json.decode(data);
     final List<dynamic> polylinePoints =
-    jsonData['features'][0]['geometry']['coordinates'];
+        jsonData['features'][0]['geometry']['coordinates'];
     for (int i = 0; i < polylinePoints.length; i++) {
       polyline.add(MapLatLng(polylinePoints[i][1], polylinePoints[i][0]));
     }
@@ -161,17 +161,20 @@ class _PolylinesSampleState extends SampleViewState
               initialMarkersCount: _routes.length,
               controller: _mapController,
               markerBuilder: (BuildContext context, int index) {
-                print("Building marker for index: $index, location: ${_routes[index].latLan}"); // Debugging print
+                print(
+                    'Building marker for index: $index, location: ${_routes[index].latLan}');
                 return MapMarker(
                   key: UniqueKey(),
                   latitude: _routes[index].latLan.latitude,
                   longitude: _routes[index].latLan.longitude,
                   child: IconButton(
-                    icon: _routes[index].icon ?? Icon(
-                      Icons.location_on,
-                      color: index == 0 ? Colors.green[600] : Colors.red[600],
-                      size: 30,
-                    ),
+                    icon: _routes[index].icon ??
+                        Icon(
+                          Icons.location_on,
+                          color:
+                              index == 0 ? Colors.green[600] : Colors.red[600],
+                          size: 30,
+                        ),
                     onPressed: () {
                       _onMarkerTapped(index);
                     },
@@ -229,7 +232,7 @@ class _PolylinesSampleState extends SampleViewState
       });
     } else {
       final List<MapLatLng> polylinePoints =
-      await getJsonData(_routes[index].jsonFile);
+          await getJsonData(_routes[index].jsonFile);
       setState(() {
         _polylines = {
           MapPolyline(
