@@ -9,7 +9,6 @@ import 'package:syncfusion_flutter_maps/maps.dart';
 import '../../../../model/sample_view.dart';
 
 class MapPolylinesPage extends SampleView {
-  const MapPolylinesPage(Key key) : super(key: key);
 
   @override
   _PolylinesSampleState createState() => _PolylinesSampleState();

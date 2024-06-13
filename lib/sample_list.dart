@@ -24,7 +24,8 @@ Map<String, Function> getSampleWidget() {
     'open_street_map': (Key key) => MapOSMPage(key),
 
 
-    'polylines': (Key key) => MapPolylinesPage(key),
+    'polylines': (Key key) => MapPolylinesPage(),
+
 
 
 

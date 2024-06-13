@@ -16,9 +16,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(),
-      home: const MapPolylinesPage(
-        Key('polylines'),
-      ),
+      home: MapPolylinesPage(),
       // home: const MapOSMPage(
       //   Key('osm'),
       // ),
