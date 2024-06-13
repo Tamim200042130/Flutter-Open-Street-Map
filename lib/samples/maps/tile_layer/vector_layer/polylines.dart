@@ -22,7 +22,7 @@ class _PolylinesSampleState extends SampleViewState
   AnimationController? _animationController;
   late Animation _animation;
   late bool _isDesktop;
-  late List<_RouteDetails> _routes;
+  List<_RouteDetails> _routes = [];
   Set<MapPolyline> _polylines = {};
   late ThemeData _themeData;
   MapLatLng? _currentLocation;
@@ -114,6 +114,8 @@ class _PolylinesSampleState extends SampleViewState
       _zoomPanBehavior.zoomLevel = 15;
       print("Routes updated: ${_routes[0].latLan}"); // Debugging print
     });
+
+    _mapController?.updateMarkers([0]); // Explicitly update marker at index 0
   }
 
   @override
