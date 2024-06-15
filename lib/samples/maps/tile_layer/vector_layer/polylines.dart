@@ -5,8 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:syncfusion_flutter_maps/maps.dart';
 
-class MapPolylinesPage extends StatefulWidget {
-  const MapPolylinesPage({Key? key}) : super(key: key);
+import '../../../../model/sample_view.dart';
+
+class MapPolylinesPage extends SampleView {
 
   @override
   _MapPolylinesPageState createState() => _MapPolylinesPageState();
@@ -17,8 +18,10 @@ class _MapPolylinesPageState extends State<MapPolylinesPage>
   late MapZoomPanBehavior _zoomPanBehavior;
   MapTileLayerController? _mapController;
   late bool _isDesktop;
-  late MapLatLng _currentLocation;
-  AnimationController? _animationController;
+  List<_RouteDetails> _routes = [];
+  Set<MapPolyline> _polylines = {};
+  late ThemeData _themeData;
+  MapLatLng? _currentLocation;
 
   @override
   void initState() {
@@ -49,32 +52,88 @@ class _MapPolylinesPageState extends State<MapPolylinesPage>
 
   Future<void> _getCurrentLocation() async {
     final position = await Geolocator.getCurrentPosition();
+
     setState(() {
       _currentLocation = MapLatLng(position.latitude, position.longitude);
-      _zoomPanBehavior.focalLatLng = _currentLocation;
+      print('Current Location: $_currentLocation');
+      _routes[0] = _RouteDetails(
+        _currentLocation!,
+        Icon(
+          Icons.my_location,
+          color: Colors.blue,
+          size: 30,
+        ),
+        'Current Location',
+        '',
+      );
+      _zoomPanBehavior.focalLatLng = _currentLocation!;
       _zoomPanBehavior.zoomLevel = 15;
+      print('Routes updated: ${_routes[0].latLan}');
     });
+
+    _mapController?.updateMarkers([0]);
+  }
+
+  @override
+  void dispose() {
+    _animationController?.dispose();
+    _animationController = null;
+    _mapController?.dispose();
+    _mapController = null;
+    _routes.clear();
+    super.dispose();
+  }
+
+  Future<List<MapLatLng>> getJsonData(String jsonFile) async {
+    final List<MapLatLng> polyline = <MapLatLng>[];
+    final String data = await rootBundle.loadString(jsonFile);
+    final dynamic jsonData = json.decode(data);
+    final List<dynamic> polylinePoints =
+        jsonData['features'][0]['geometry']['coordinates'];
+    for (int i = 0; i < polylinePoints.length; i++) {
+      polyline.add(MapLatLng(polylinePoints[i][1], polylinePoints[i][0]));
+    }
+    _animationController?.forward(from: 0);
+
+    return polyline;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SfMaps(
-        layers: [
-          MapTileLayer(
-            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            initialMarkersCount: 1,
-            controller: _mapController,
-            markerBuilder: (BuildContext context, int index) {
-              return MapMarker(
-                latitude: _currentLocation.latitude,
-                longitude: _currentLocation.longitude,
-                child: _buildLocationIndicator(),
-              );
-            },
-            sublayers: [
-              MapPolylineLayer(
-                polylines: _buildPolylines(),
+      body: SfMapsTheme(
+        data: SfMapsThemeData(
+          shapeHoverColor: Colors.transparent,
+        ),
+        child: SfMaps(
+          layers: [
+            MapTileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              initialMarkersCount: _routes.length,
+              controller: _mapController,
+              markerBuilder: (BuildContext context, int index) {
+                print(
+                    'Building marker for index: $index, location: ${_routes[index].latLan}');
+                return MapMarker(
+                  key: UniqueKey(),
+                  latitude: _routes[index].latLan.latitude,
+                  longitude: _routes[index].latLan.longitude,
+                  child: IconButton(
+                    icon: _routes[index].icon ??
+                        Icon(
+                          Icons.location_on,
+                          color:
+                              index == 0 ? Colors.green[600] : Colors.red[600],
+                          size: 30,
+                        ),
+                    onPressed: () {
+                      _onMarkerTapped(index);
+                    },
+                  ),
+                );
+              },
+              tooltipSettings: MapTooltipSettings(
+                color: Color.fromRGBO(45, 45, 45, 1),
               ),
             ],
             zoomPanBehavior: _zoomPanBehavior,
@@ -83,25 +142,34 @@ class _MapPolylinesPageState extends State<MapPolylinesPage>
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          await _updateLocation();
+          try {
+            await _getCurrentLocation();
+          } catch (e) {
+            print(e);
+          }
         },
         child: Icon(Icons.my_location),
       ),
     );
   }
 
-  Set<MapPolyline> _buildPolylines() {
-    final Set<MapPolyline> polylines = {};
-    if (_currentLocation != null) {
-      final List<MapLatLng> points = [];
-      // Add your polyline points here
-      points.add(_currentLocation);
-      points.add(MapLatLng(_currentLocation.latitude + 0.01, _currentLocation.longitude + 0.01)); // Example points
-      polylines.add(MapPolyline(
-        points: points,
-        color: Colors.red,
-        width: 6.0,
-      ));
+  void _onMarkerTapped(int index) async {
+    if (index == 0) {
+      setState(() {
+        _polylines.clear();
+      });
+    } else {
+      final List<MapLatLng> polylinePoints =
+          await getJsonData(_routes[index].jsonFile);
+      setState(() {
+        _polylines = {
+          MapPolyline(
+            points: polylinePoints,
+            color: Color.fromRGBO(0, 102, 255, 1.0),
+            width: 6.0,
+          ),
+        };
+      });
     }
     return polylines;
   }
