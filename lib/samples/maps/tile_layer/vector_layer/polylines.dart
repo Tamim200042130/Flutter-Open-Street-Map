@@ -1,248 +1,132 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:syncfusion_flutter_core/theme.dart';
 import 'package:syncfusion_flutter_maps/maps.dart';
 
-/// Local import
-import '../../../../model/sample_view.dart';
-
-/// Renders the polygon lines map sample
-class MapPolylinesPage extends SampleView {
-  /// Creates the polygon lines map sample
-  const MapPolylinesPage(Key key) : super(key: key);
+class MapPolylinesPage extends StatefulWidget {
+  const MapPolylinesPage({Key? key}) : super(key: key);
 
   @override
-  _PolylinesSampleState createState() => _PolylinesSampleState();
+  _MapPolylinesPageState createState() => _MapPolylinesPageState();
 }
 
-class _PolylinesSampleState extends SampleViewState
+class _MapPolylinesPageState extends State<MapPolylinesPage>
     with SingleTickerProviderStateMixin {
   late MapZoomPanBehavior _zoomPanBehavior;
   MapTileLayerController? _mapController;
-  AnimationController? _animationController;
-  late Animation _animation;
   late bool _isDesktop;
-  late List<_RouteDetails> _routes;
-  Set<MapPolyline> _polylines = {};
-  late ThemeData _themeData;
   late MapLatLng _currentLocation;
+  AnimationController? _animationController;
 
   @override
   void initState() {
-    _routes = <_RouteDetails>[
-      _RouteDetails(MapLatLng(51.4700, -0.4543), null, 'London Heathrow',
-          'assets/london_to_british.json'),
-      _RouteDetails(MapLatLng(51.5194, -0.1270), null, 'The British Museum',
-          'assets/london_to_british.json'),
-      _RouteDetails(MapLatLng(51.4839, -0.6044), null, 'Windsor Castle',
-          'assets/london_to_windsor_castle.json'),
-      _RouteDetails(MapLatLng(51.4560, -0.3415), null, 'Twickenham Stadium',
-          'assets/london_to_twickenham_stadium.json'),
-      _RouteDetails(
-          MapLatLng(51.3472, -0.3192),
-          null,
-          'Chessington World of Adventures',
-          'assets/london_to_chessington.json'),
-      _RouteDetails(MapLatLng(51.4036, -0.3378), null, 'Hampton Court Palace',
-          'assets/london_to_hampton_court_palace.json'),
-    ];
     _mapController = MapTileLayerController();
     _zoomPanBehavior = MapZoomPanBehavior(
       minZoomLevel: 3,
       zoomLevel: 10,
-      focalLatLng: MapLatLng(51.4700, -0.2843),
       toolbarSettings: MapToolbarSettings(
           direction: Axis.vertical, position: MapToolbarPosition.bottomRight),
       maxZoomLevel: 15,
       enableDoubleTapZooming: true,
     );
 
+    _getCurrentLocation();
     _animationController = AnimationController(
-      duration: Duration(seconds: 3),
+      duration: const Duration(milliseconds: 500),
       vsync: this,
     );
-
-    _animation = CurvedAnimation(
-      parent: _animationController!,
-      curve: Curves.easeInOut,
-    );
-
-    _getCurrentLocation();
 
     super.initState();
   }
 
+  @override
+  void dispose() {
+    _animationController?.dispose();
+    super.dispose();
+  }
+
   Future<void> _getCurrentLocation() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      await Geolocator.openLocationSettings();
-      return Future.error('Location services are disabled.');
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return Future.error('Location permissions are denied.');
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      return Future.error(
-          'Location permissions are permanently denied, we cannot request permissions.');
-    }
-
     final position = await Geolocator.getCurrentPosition();
     setState(() {
       _currentLocation = MapLatLng(position.latitude, position.longitude);
-      _routes[0] = _RouteDetails(_currentLocation, null, 'Current Location',
-          ''); // Update your location
       _zoomPanBehavior.focalLatLng = _currentLocation;
       _zoomPanBehavior.zoomLevel = 15;
     });
   }
 
   @override
-  void dispose() {
-    _animationController?.dispose();
-    _animationController = null;
-    _mapController?.dispose();
-    _mapController = null;
-    _routes.clear();
-    super.dispose();
-  }
-
-  Future<List<MapLatLng>> getJsonData(String jsonFile) async {
-    final List<MapLatLng> polyline = <MapLatLng>[];
-    final String data = await rootBundle.loadString(jsonFile);
-    final dynamic jsonData = json.decode(data);
-    final List<dynamic> polylinePoints =
-        jsonData['features'][0]['geometry']['coordinates'];
-    for (int i = 0; i < polylinePoints.length; i++) {
-      polyline.add(MapLatLng(polylinePoints[i][1], polylinePoints[i][0]));
-    }
-    // ignore: unawaited_futures
-    _animationController?.forward(from: 0);
-
-    return polyline;
-  }
-
-  @override
   Widget build(BuildContext context) {
-    _themeData = Theme.of(context);
-    _isDesktop = kIsWeb ||
-        _themeData.platform == TargetPlatform.macOS ||
-        _themeData.platform == TargetPlatform.windows ||
-        _themeData.platform == TargetPlatform.linux;
     return Scaffold(
-      body: SfMapsTheme(
-        data: SfMapsThemeData(
-          shapeHoverColor: Colors.transparent,
-        ),
-        child: SfMaps(
-          layers: [
-            MapTileLayer(
-              // urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              urlTemplate:
-                  'https://www.google.com/maps/embed/v1/view?key=AIzaSyALrSTy6NpqdhIOUs3IQMfvjh71td2suzY&maptype=satellite&center=0.000000,0.000000&zoom=2',
-              initialMarkersCount: _routes.length,
-              controller: _mapController,
-              markerBuilder: (BuildContext context, int index) {
-                return MapMarker(
-                  key: UniqueKey(),
-                  latitude: _routes[index].latLan.latitude,
-                  longitude: _routes[index].latLan.longitude,
-                  child: IconButton(
-                    icon: Icon(
-                      Icons.location_on,
-                      color: index == 0 ? Colors.green[600] : Colors.red[600],
-                      size: 30,
-                    ),
-                    onPressed: () {
-                      _onMarkerTapped(index);
-                    },
-                  ),
-                );
-              },
-              tooltipSettings: MapTooltipSettings(
-                color: Color.fromRGBO(45, 45, 45, 1),
+      body: SfMaps(
+        layers: [
+          MapTileLayer(
+            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            initialMarkersCount: 1,
+            controller: _mapController,
+            markerBuilder: (BuildContext context, int index) {
+              return MapMarker(
+                latitude: _currentLocation.latitude,
+                longitude: _currentLocation.longitude,
+                child: _buildLocationIndicator(),
+              );
+            },
+            sublayers: [
+              MapPolylineLayer(
+                polylines: _buildPolylines(),
               ),
-              markerTooltipBuilder: (BuildContext context, int index) {
-                return Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(_routes[index].city,
-                      style: _themeData.textTheme.caption!
-                          .copyWith(color: Color.fromRGBO(255, 255, 255, 1))),
-                );
-              },
-              sublayers: [
-                MapPolylineLayer(
-                  polylines: _polylines,
-                  tooltipBuilder: (BuildContext context, int index) {
-                    return Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        _routes[0].city + ' - ' + _routes[1].city,
-                        style: _themeData.textTheme.caption!
-                            .copyWith(color: Color.fromRGBO(255, 255, 255, 1)),
-                      ),
-                    );
-                  },
-                ),
-              ],
-              zoomPanBehavior: _zoomPanBehavior,
-            ),
-          ],
-        ),
+            ],
+            zoomPanBehavior: _zoomPanBehavior,
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          try {
-            await _getCurrentLocation();
-          } catch (e) {
-            print(e); // Print any errors to the console
-          }
+          await _updateLocation();
         },
         child: Icon(Icons.my_location),
       ),
     );
   }
 
-  void _onMarkerTapped(int index) async {
-    if (index == 0) {
-      // If the tapped marker is your location, clear the polylines.
-      setState(() {
-        _polylines.clear();
-      });
-    } else {
-      // Otherwise, load and display the corresponding polyline.
-      final List<MapLatLng> polylinePoints =
-          await getJsonData(_routes[index].jsonFile);
-      setState(() {
-        _polylines = {
-          MapPolyline(
-            points: polylinePoints,
-            color: Color.fromRGBO(0, 102, 255, 1.0),
-            width: 6.0,
-          ),
-        };
-      });
+  Set<MapPolyline> _buildPolylines() {
+    final Set<MapPolyline> polylines = {};
+    if (_currentLocation != null) {
+      final List<MapLatLng> points = [];
+      // Add your polyline points here
+      points.add(_currentLocation);
+      points.add(MapLatLng(_currentLocation.latitude + 0.01, _currentLocation.longitude + 0.01)); // Example points
+      polylines.add(MapPolyline(
+        points: points,
+        color: Colors.red,
+        width: 6.0,
+      ));
     }
+    return polylines;
   }
-}
 
-class _RouteDetails {
-  _RouteDetails(this.latLan, this.icon, this.city, this.jsonFile);
+  Future<void> _updateLocation() async {
+    final position = await Geolocator.getCurrentPosition();
+    final newLocation = MapLatLng(position.latitude, position.longitude);
+    setState(() {
+      _currentLocation = newLocation;
+      _zoomPanBehavior.focalLatLng = _currentLocation;
+    });
 
-  MapLatLng latLan;
-  Widget? icon;
-  String city;
-  String jsonFile;
+    _animateCamera(_currentLocation);
+  }
+
+  void _animateCamera(MapLatLng newLocation) {
+    _animationController!.reset();
+    _animationController!.forward();
+  }
+
+  Widget _buildLocationIndicator() {
+    return Icon(
+      Icons.location_on,
+      color: Colors.blue,
+      size: 36.0,
+    );
+  }
 }

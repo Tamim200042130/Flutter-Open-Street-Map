@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(),
       home: const MapPolylinesPage(
-        Key('polylines'),
+        key: Key('polylines'),
       ),
       // home: const MapOSMPage(
       //   Key('osm'),
