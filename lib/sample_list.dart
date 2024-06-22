@@ -15,6 +15,12 @@ Map<String, Function> getSampleWidget() {
     // Maps: Tile Layer Samples
     'open_street_map': (Key key) => MapOSMPage(key),
 
-    'polylines': (Key key) => MapPolylinesPage(),
+    'polylines': (Key key) => MapPolylinesPage(key),
+
+    'polylines': (Key key) => MapPolylinesPage(key),
+
+
+
+
   };
 }

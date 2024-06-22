@@ -13,7 +13,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(),
-      home: MapPolylinesPage(),
+      // home: MapPolylinesPage(),
+      home: const MapPolylinesPage(
+        Key('polylines'),
+      ),
       // home: const MapOSMPage(
       //   Key('osm'),
       // ),
