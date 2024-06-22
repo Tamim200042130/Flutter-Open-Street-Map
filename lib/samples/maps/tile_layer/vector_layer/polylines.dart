@@ -13,6 +13,7 @@ class MapPolylinesPage extends SampleView {
   @override
   _PolylinesSampleState createState() => _PolylinesSampleState();
 }
+
 class _PolylinesSampleState extends SampleViewState
     with SingleTickerProviderStateMixin {
   late MapZoomPanBehavior _zoomPanBehavior;
@@ -24,6 +25,7 @@ class _PolylinesSampleState extends SampleViewState
   Set<MapPolyline> _polylines = {};
   late ThemeData _themeData;
   MapLatLng? _currentLocation;
+
   @override
   void initState() {
     _routes = <_RouteDetails>[
@@ -64,6 +66,7 @@ class _PolylinesSampleState extends SampleViewState
     _getCurrentLocation();
     super.initState();
   }
+
   Future<void> _getCurrentLocation() async {
     bool serviceEnabled;
     LocationPermission permission;
@@ -103,6 +106,7 @@ class _PolylinesSampleState extends SampleViewState
     });
     _mapController?.updateMarkers([0]);
   }
+
   @override
   void dispose() {
     _animationController?.dispose();
@@ -112,18 +116,20 @@ class _PolylinesSampleState extends SampleViewState
     _routes.clear();
     super.dispose();
   }
+
   Future<List<MapLatLng>> getJsonData(String jsonFile) async {
     final List<MapLatLng> polyline = <MapLatLng>[];
     final String data = await rootBundle.loadString(jsonFile);
     final dynamic jsonData = json.decode(data);
     final List<dynamic> polylinePoints =
-    jsonData['features'][0]['geometry']['coordinates'];
+        jsonData['features'][0]['geometry']['coordinates'];
     for (int i = 0; i < polylinePoints.length; i++) {
       polyline.add(MapLatLng(polylinePoints[i][1], polylinePoints[i][0]));
     }
     _animationController?.forward(from: 0);
     return polyline;
   }
+
   @override
   Widget build(BuildContext context) {
     _themeData = Theme.of(context);
@@ -154,7 +160,7 @@ class _PolylinesSampleState extends SampleViewState
                         Icon(
                           Icons.location_on,
                           color:
-                          index == 0 ? Colors.green[600] : Colors.red[600],
+                              index == 0 ? Colors.green[600] : Colors.red[600],
                           size: 30,
                         ),
                     onPressed: () {
@@ -170,7 +176,7 @@ class _PolylinesSampleState extends SampleViewState
                 return Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Text(_routes[index].city,
-                      style: _themeData.textTheme.caption!
+                      style: _themeData.textTheme.bodySmall!
                           .copyWith(color: Color.fromRGBO(255, 255, 255, 1))),
                 );
               },
@@ -182,7 +188,7 @@ class _PolylinesSampleState extends SampleViewState
                       padding: const EdgeInsets.all(8.0),
                       child: Text(
                         _routes[0].city + ' - ' + _routes[1].city,
-                        style: _themeData.textTheme.caption!
+                        style: _themeData.textTheme.bodySmall!
                             .copyWith(color: Color.fromRGBO(255, 255, 255, 1)),
                       ),
                     );
@@ -206,6 +212,7 @@ class _PolylinesSampleState extends SampleViewState
       ),
     );
   }
+
   void _onMarkerTapped(int index) async {
     if (index == 0) {
       setState(() {
@@ -213,7 +220,7 @@ class _PolylinesSampleState extends SampleViewState
       });
     } else {
       final List<MapLatLng> polylinePoints =
-      await getJsonData(_routes[index].jsonFile);
+          await getJsonData(_routes[index].jsonFile);
       setState(() {
         _polylines = {
           MapPolyline(
@@ -226,8 +233,10 @@ class _PolylinesSampleState extends SampleViewState
     }
   }
 }
+
 class _RouteDetails {
   _RouteDetails(this.latLan, this.icon, this.city, this.jsonFile);
+
   MapLatLng latLan;
   Widget? icon;
   String city;
