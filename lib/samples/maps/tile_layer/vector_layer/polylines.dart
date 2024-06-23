@@ -186,7 +186,7 @@ class _PolylinesSampleState extends SampleViewState
                     child: IconButton(
                       icon: _routes[index].icon ??
                           Icon(
-                            Icons.bus_alert_rounded,
+                            Icons.location_on_rounded,
                             color: index == 0
                                 ? Colors.green[600]
                                 : Colors.red[600],
