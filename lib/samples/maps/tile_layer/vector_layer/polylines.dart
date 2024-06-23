@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as Math;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -130,6 +131,22 @@ class _PolylinesSampleState extends SampleViewState
     return polyline;
   }
 
+  double _calculateBearing(MapLatLng start, MapLatLng end) {
+    double startLat = start.latitude * (3.141592653589793 / 180);
+    double startLng = start.longitude * (3.141592653589793 / 180);
+    double endLat = end.latitude * (3.141592653589793 / 180);
+    double endLng = end.longitude * (3.141592653589793 / 180);
+
+    double dLng = endLng - startLng;
+    double x = Math.sin(dLng) * Math.cos(endLat);
+    double y = Math.cos(startLat) * Math.sin(endLat) -
+        Math.sin(startLat) * Math.cos(endLat) * Math.cos(dLng);
+    double bearing = Math.atan2(x, y);
+    bearing = bearing * (180 / 3.141592653589793);
+    bearing = (bearing + 360) % 360;
+    return bearing;
+  }
+
   @override
   Widget build(BuildContext context) {
     _themeData = Theme.of(context);
@@ -151,21 +168,34 @@ class _PolylinesSampleState extends SampleViewState
               markerBuilder: (BuildContext context, int index) {
                 print(
                     'Building marker for index: $index, location: ${_routes[index].latLan}');
+
+                // Calculate the bearing if it's not the last marker
+                double rotation = 0;
+                if (index < _routes.length - 1) {
+                  rotation = _calculateBearing(
+                      _routes[index].latLan, _routes[index + 1].latLan);
+                }
+
                 return MapMarker(
                   key: UniqueKey(),
                   latitude: _routes[index].latLan.latitude,
                   longitude: _routes[index].latLan.longitude,
-                  child: IconButton(
-                    icon: _routes[index].icon ??
-                        Icon(
-                          Icons.location_on,
-                          color:
-                              index == 0 ? Colors.green[600] : Colors.red[600],
-                          size: 30,
-                        ),
-                    onPressed: () {
-                      _onMarkerTapped(index);
-                    },
+                  child: Transform.rotate(
+                    angle: rotation * (3.141592653589793 / 180),
+                    // Convert bearing to radians
+                    child: IconButton(
+                      icon: _routes[index].icon ??
+                          Icon(
+                            Icons.location_on,
+                            color: index == 0
+                                ? Colors.green[600]
+                                : Colors.red[600],
+                            size: 30,
+                          ),
+                      onPressed: () {
+                        _onMarkerTapped(index);
+                      },
+                    ),
                   ),
                 );
               },
