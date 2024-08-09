@@ -121,7 +121,7 @@ class _CustomButton extends State<CustomDirectionalButtons> {
         widget.initialValue! % 1 == 0 && widget.step! % 1 == 0
             ? _counter.toStringAsFixed(0)
             : _counter.toStringAsFixed(1),
-        style: widget.style ?? Theme.of(context).textTheme.headline5);
+        style: widget.style ?? Theme.of(context).textTheme.headlineLarge);
   }
 
   /// Return different widgets for a horizontal and vertical BuildPicker

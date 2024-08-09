@@ -139,8 +139,7 @@ class _ExpansionTileState extends State<CustomExpansionTile>
                   padding: const EdgeInsets.only(top: 0, bottom: 5),
                   child: DefaultTextStyle(
                     style: Theme.of(context)
-                        .textTheme
-                        .subtitle1!
+                        .textTheme.titleSmall!
                         .copyWith(color: titleColor),
                     child: widget.title!,
                   ),
@@ -174,7 +173,7 @@ class _ExpansionTileState extends State<CustomExpansionTile>
     final ThemeData theme = Theme.of(context);
     _borderColorTween.end = Colors.transparent;
     _headerColorTween!
-      ..begin = theme.textTheme.subtitle1!.color
+      ..begin = theme.textTheme.headlineMedium!.color
       ..end = theme.canvasColor;
     _iconColorTween!
       ..begin = theme.unselectedWidgetColor
